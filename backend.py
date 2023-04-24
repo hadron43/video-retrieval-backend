@@ -106,9 +106,7 @@ from pydantic import BaseModel
 app = FastAPI()
 
 origins = [
-    "http://localhost:5173",
-    "http://localhost:4173",
-    "https://telegram.whats-viral.me"
+    "*"
 ]
 
 app.add_middleware(
@@ -122,7 +120,7 @@ app.add_middleware(
 class Query(BaseModel):
     text: str
 
-@app.get("/search")
+@app.post("/search")
 async def search_api(query: Query):
     global index, bi_encoder, top_k_count, df
     scores, results, time_taken = search(query.text, index, bi_encoder, top_k_count)
