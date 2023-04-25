@@ -13,38 +13,38 @@ from pathlib import Path
 from vector_engine.vector_engine.utils import vector_search, id2details
 
 def search(query, index, model, top_k_count):
+    curr_time = time.time()
+
     # Semantic Search
     # Encoding the query using the bi-encoder and finding potentially relevant summaries
-    t=time.time()
     query_vector = model.encode([query])
     top_k = index.search(query_vector, top_k_count)
+    top_k_scores = top_k[0].tolist()[0]
     top_k_ids = top_k[1].tolist()[0]
-    top_k_ids = list(np.unique(top_k_ids))
+    # top_k_ids = list(np.unique(top_k_ids))
 
     # Re-Ranking Results
     # Scoring all retrieved summaries with the cross_encoder
-    t=time.time()
     cross_inp = [[query, passages[hit]] for hit in top_k_ids]
-
     bienc_op = [video_ids[hit] for hit in top_k_ids]
     cross_scores = cross_encoder.predict(cross_inp)
-    # print('>>>> Results in Total Time: {}'.format(time.time()-t))
-        
+
     # Output of top-k hits from re-ranker
-    # print("\n-------------------------\n")
-    # print(f"Top-{top_k_count} Cross-Encoder Re-ranker hits")
-
     cross_ranks = np.argsort(np.array(cross_scores))[::-1]
-    # for hit in cross_ranks:
-    #     print("\t{}".format(bienc_op[hit].replace("\n", " ")))
+    # cross_results = [bienc_op[hit] for hit in cross_ranks]
+    cross_results = [top_k_ids[hit] for hit in cross_ranks]
+    
+    # Process cross_scores
+    cross_scores = np.sort(cross_scores)[::-1]
+    cross_scores = cross_scores.tolist()
 
-    cross_results = [bienc_op[hit] for hit in cross_ranks]
-    return cross_scores.tolist(), cross_results, time.time() - t
+    return cross_scores, cross_results,  time.time() - curr_time
 
 
 # read data from the csv file (from the location it is stored)
 data_dir = 'data/'
 data_list = os.listdir(data_dir)
+data_list.sort()
 dataframe_list = []
 raw_data = {}
 print(data_list)
@@ -97,6 +97,10 @@ print("Video Summaries:", len(passages))
 index = faiss.read_index(f"finetuned_faiss_index.index")
 # search(query, index, bi_encoder, top_k_count)
 
+def id2video_id(df, I):
+    """Returns the video details based on the video id."""
+    return [list(df[df['id_value'] == idx]['id'])[0] for idx in I]
+
 # Starting FAST API app
 
 from fastapi import FastAPI
@@ -125,8 +129,10 @@ async def search_api(query: Query):
     global index, bi_encoder, top_k_count, df
     scores, results, time_taken = search(query.text, index, bi_encoder, top_k_count)
 
+    video_ids = id2video_id(df, results)
+
     return {
         'scores': scores,
-        'results': [raw_data[id] for id in results],
+        'results': [raw_data[id] for id in video_ids],
         'time': time_taken
     }
