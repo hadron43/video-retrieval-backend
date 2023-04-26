@@ -8,7 +8,7 @@ git submodule update
 ```
 
 ## Model files initialization
-Download folder from [google drive](https://drive.google.com/drive/folders/1-zgjeLheefUQyG6jlOAJ6HjQ70BaveMr?usp=share_link) and add the folder in project root directory. (You should have model files inside `fintuned_model` directory.)
+Download folder from [google drive](https://drive.google.com/drive/folders/1-zgjeLheefUQyG6jlOAJ6HjQ70BaveMr?usp=share_link) and add the folder in project root directory. (You should have model files inside `finetuned_model` directory.)
 
 ## Setup
 
