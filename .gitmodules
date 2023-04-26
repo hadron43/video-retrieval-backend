@@ -1,0 +1,3 @@
+[submodule "vector_engine"]
+	path = vector_engine
+	url = https://github.com/kstathou/vector_engine.git
